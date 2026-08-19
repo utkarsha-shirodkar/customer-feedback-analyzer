@@ -1,40 +1,36 @@
 # Customer Feedback Analyzer (Gen AI)
 
-This is your first full project. It puts together almost everything from the course into one real, useful app.
-
-**The problem:** A restaurant owner has dozens of customer reviews and no time to read them all. They want a simple tool: paste the reviews, click a button, and instantly see how customers feel and what they keep complaining about.
+The Customer Feedback Analyzer is a full-stack web application designed to automatically process and summarize large volumes of customer reviews for restaurant owners. The application combines a **FastAPI backend** powered by **Google Gemini** with an interactive **Streamlit frontend dashboard**, leveraging an **SQLite database** to store results.
 
 **What you will build:**
+
 - A **backend** (FastAPI) that uses Gemini to analyze one review.
 - A **frontend** (Streamlit dashboard) that the owner actually clicks on. It sends every review to your backend and shows a summary.
 
-The fun part: the frontend calls your *own* backend the same way you called the currency API in Lesson 9. You are now on both sides of the API.
-
 ---
 
-## What each lesson gave you
+## Technical Architecture & Component Breakdown
 
-| From lesson | Used here for |
-|---|---|
-| FastAPI + uv (10) | The backend service |
-| Pydantic + structured output (3, 7) | Clean input/output: `label`, `score`, `theme` |
-| Loops, lists, dicts (1) | Going through many reviews, collecting results |
-| SQLite database (12) | Saving every analyzed review to a `feedback.db` table |
-| Error handling (5) | One bad review must not crash the whole batch |
-| Calling APIs (9) | The frontend calling the backend |
-| Streamlit (4, 6) | The dashboard |
+| Component      | Technology             | Primary Function                                                          |
+| -------------- | ---------------------- | ------------------------------------------------------------------------- |
+| Backend API    | FastAPI + uv           | Hosts the service that analyzes individual reviews.                       |
+| AI Integration | Gemini + Pydantic      | Generates structured analysis (labels, scores, and themes).               |
+| Frontend UI    | Streamlit              | Provides the dashboard interface for pasting reviews and viewing metrics. |
+| Data Storage   | SQLite (`feedback.db`) | Saves every processed review and its metadata for long-term tracking.     |
+| Core Logic     | Python Fundamentals    | Handles loops, list parsing, and robust error management.                 |
+| Integration    | HTTP Requests          | Facilitates frontend-to-backend API communication.                        |
 
 ---
 
 ## Step 1: Set up the project
 
 ```bash
-uv init 11_project_feedback_analyzer
-cd 11_project_feedback_analyzer
+uv init customer_feedback_analyzer
+cd customer_feedback_analyzer
 uv add "fastapi[standard]" google-genai python-dotenv pydantic streamlit requests
 ```
 
-Put your Gemini key in a `.env` file (see `sample.env`):
+Put your Gemini key in a `.env` file:
 
 ```
 GOOGLE_API_KEY=your_key_here
@@ -44,16 +40,7 @@ GOOGLE_API_KEY=your_key_here
 
 ## Step 2: The backend (`api.py`)
 
-This is almost the same as the sentiment API from Lesson 10. We just add one more field to the answer: a one-word **theme** (like "delivery" or "taste"), so the owner can see *what* people talk about.
-
-The full code is in `api.py`. The important part is the answer shape:
-
-```python
-class Analysis(BaseModel):
-    label: str   # "positive", "negative", or "neutral"
-    score: int   # 1 (very bad) to 5 (very good)
-    theme: str   # one word, e.g. "delivery"
-```
+The full code is in `api.py`.
 
 Run the backend in its **own terminal** and leave it running:
 
@@ -77,23 +64,7 @@ Paste a few reviews (one per line) and click **Analyze**. You can copy test revi
 
 The key idea in the frontend is this loop. For each review, we call our own backend and collect the answer:
 
-```python
-for review in reviews:
-    try:
-        response = requests.post(API_URL, json={"text": review})
-        data = response.json()
-        results.append({
-            "review": review,
-            "label": data["label"],
-            "score": data["score"],
-            "theme": data["theme"],
-        })
-    except Exception:
-        # one bad review should not stop the whole batch
-        results.append({"review": review, "label": "error", "score": 0, "theme": "error"})
-```
-
-Then we build a small summary the owner cares about: how many reviews, the average score, the percent that are positive, and the single theme people mention most. Finally, a **Save to database** button writes every review into a SQLite table (`feedback.db`), and a **Saved history** section reads them all back. This is the read/write database idea from Lesson 12 — now the business keeps a growing record of all feedback, not just one report.
+Small summary: how many reviews, the average score, the percent that are positive, and the single theme people mention most. Finally, a **Save to database** button writes every review into a SQLite table (`feedback.db`), and a **Saved history** section reads them all back.
 
 ---
 
@@ -101,21 +72,22 @@ Then we build a small summary the owner cares about: how many reviews, the avera
 
 When a file gets long, we split it. All the database code (create table, save, load) lives in its own file, **`database.py`**. Then `app.py` simply imports it at the top:
 
-```python
-from database import init_db, save_results, load_history, DB_FILE
-```
-
 This is the same idea as `import requests` or `import streamlit` — except now we are importing **our own** file. The app file stays short and is about the screen; the database file is about the data. Each file has one clear job.
 
 ---
 
 ## How to run the whole thing (two terminals)
 
-| Terminal 1 (backend) | Terminal 2 (frontend) |
-|---|---|
+| Terminal 1 (backend)        | Terminal 2 (frontend)         |
+| --------------------------- | ----------------------------- |
 | `uv run fastapi dev api.py` | `uv run streamlit run app.py` |
-| stays running | opens in your browser |
+| stays running               | opens in your browser         |
 
 If the frontend shows "error" rows, the most common reason is that the backend is not running. Start it first.
 
 ---
+
+# Screenshots
+
+[Screenshot1.png]
+[Screenshot1.png]
