@@ -89,5 +89,5 @@ If the frontend shows "error" rows, the most common reason is that the backend i
 
 # Screenshots
 
-[Screenshot1.png]
-[Screenshot1.png]
+![Screenshot1.png]
+![Screenshot1.png]
